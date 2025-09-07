@@ -1,0 +1,480 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShopLite — Frontend‑Only E‑Commerce</title>
+  <style>
+    :root{
+      --bg:#0b0e14; /* dark slate */
+      --card:#111522;
+      --muted:#6b7280;
+      --text:#e5e7eb;
+      --accent:#22c55e; /* green */
+      --accent-2:#38bdf8; /* sky */
+      --danger:#ef4444;
+      --shadow:0 8px 24px rgba(0,0,0,.25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:linear-gradient(180deg,#0b0e14 0%, #0e1322 100%);
+      color:var(--text);
+    }
+    a{color:inherit}
+
+    /* Header */
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter:saturate(120%) blur(8px);
+      background:rgba(11,14,20,.6);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .wrap{max-width:1200px; margin:auto; padding:16px;}
+    .row{display:flex; align-items:center; gap:12px}
+    .space{flex:1}
+    .brand{
+      display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.3px; font-size:18px
+    }
+    .logo{width:32px; height:32px; border-radius:10px; background:conic-gradient(from 210deg, var(--accent), var(--accent-2)); box-shadow: var(--shadow)}
+
+    .search{position:relative; flex:1; max-width:520px}
+    .search input{
+      width:100%; padding:12px 44px; border-radius:999px; border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04); color:var(--text);
+      outline:none; box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)
+    }
+    .search .icon{position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.7}
+
+    select, button, input, textarea{font:inherit}
+    select, .btn{border-radius:12px; border:1px solid rgba(255,255,255,.08); background:#0f1422; color:var(--text)}
+    select{padding:10px 12px}
+
+    .btn{padding:10px 14px; cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg, #22c55e, #16a34a); border-color:rgba(0,0,0,.2); color:#06110a; font-weight:700}
+    .btn.ghost{background:rgba(255,255,255,.06)}
+    .btn.icon{display:inline-flex; align-items:center; gap:8px}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+
+    /* Main */
+    main{max-width:1200px; margin:20px auto; padding:16px;}
+    .controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px}
+
+    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px}
+    @media (min-width:600px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }}
+    @media (min-width:900px){ .grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }}
+    @media (min-width:1200px){ .grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }}
+
+    .card{
+      background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:var(--radius); overflow:hidden; box-shadow: var(--shadow);
+      display:flex; flex-direction:column
+    }
+    .thumb{aspect-ratio:4/3; background:#0b1020; display:grid; place-items:center; position:relative}
+    .thumb img{width:88%; height:88%; object-fit:contain; filter: drop-shadow(0 10px 20px rgba(0,0,0,.5));}
+    .badge{position:absolute; left:12px; top:12px; background:rgba(56,189,248,.15); color:#a5f3fc; padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid rgba(56,189,248,.25)}
+
+    .card .content{padding:14px; display:flex; flex-direction:column; gap:6px}
+    .title{font-weight:700}
+    .price{font-weight:800}
+    .muted{color:var(--muted); font-size:14px}
+    .row-between{display:flex; align-items:center; justify-content:space-between; gap:8px}
+
+    .qty{
+      display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:6px
+    }
+    .qty button{background:transparent; border:0; color:var(--text); font-size:18px; width:28px; height:28px; cursor:pointer}
+
+    /* Cart Drawer */
+    .drawer{position:fixed; right:0; top:0; height:100%; width:380px; max-width:100vw; background:#0e1322; border-left:1px solid rgba(255,255,255,.08); transform:translateX(100%); transition:transform .28s ease; display:flex; flex-direction:column; z-index:50}
+    .drawer.open{transform:translateX(0)}
+    .drawer header{position:sticky; top:0; background:transparent}
+    .drawer .list{flex:1; overflow:auto; padding:12px}
+    .cart-item{display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; padding:12px; border-radius:12px; background:rgba(255,255,255,.04); margin-bottom:10px}
+    .cart-item img{width:64px; height:64px; object-fit:contain}
+
+    .line{height:1px; background:rgba(255,255,255,.08); margin:8px 0 12px}
+    .totals{padding:12px; background:rgba(255,255,255,.04); border-radius:12px}
+
+    /* Modal */
+    dialog{border:1px solid rgba(255,255,255,.08); border-radius:16px; background:#0e1322; color:var(--text); width:min(560px, 92vw)}
+    dialog::backdrop{background:rgba(0,0,0,.6)}
+    .form{display:grid; gap:10px}
+    .form label{font-size:14px; color:var(--muted)}
+    .form input, .form textarea{padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:#0f1422; color:var(--text)}
+
+    footer{max-width:1200px; margin:40px auto; padding:16px; opacity:.7; text-align:center}
+
+    /* Small chips */
+    .chip{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size:12px}
+
+    .pill{padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.04); font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap row">
+      <div class="brand"><div class="logo"></div> <span>ShopLite</span></div>
+      <div class="search">
+        <span class="icon">🔎</span>
+        <input id="search" placeholder="Search products, e.g. headphones" />
+      </div>
+      <div class="space"></div>
+      <select id="filterCategory" title="Filter by category">
+        <option value="all">All Categories</option>
+      </select>
+      <select id="sortBy" title="Sort">
+        <option value="popularity">Sort: Popularity</option>
+        <option value="priceAsc">Price: Low to High</option>
+        <option value="priceDesc">Price: High to Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="new">Newest</option>
+      </select>
+      <button class="btn icon ghost" id="openCart" title="Cart"><span id="cartCount" class="chip">0</span> 🛒 Cart</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls">
+      <span class="pill" id="activeFilters">Showing: All items</span>
+      <button class="btn" id="clearFilters">Clear Filters</button>
+    </div>
+    <section id="grid" class="grid" aria-live="polite"></section>
+  </main>
+
+  <aside id="drawer" class="drawer" aria-label="Shopping cart" aria-hidden="true">
+    <header class="wrap row">
+      <strong>🛒 Your Cart</strong>
+      <div class="space"></div>
+      <button class="btn" id="closeCart">✕</button>
+    </header>
+    <div class="list" id="cartList"></div>
+    <div class="wrap">
+      <div class="totals">
+        <div class="row-between"><span>Subtotal</span> <strong id="subtotal">₹0</strong></div>
+        <div class="row-between"><span>GST (18%)</span> <span id="tax">₹0</span></div>
+        <div class="row-between"><span>Shipping</span> <span id="shipping">₹0</span></div>
+        <div class="line"></div>
+        <div class="row-between"><strong>Total</strong> <strong id="grand">₹0</strong></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <input id="coupon" placeholder="Coupon code (e.g., SAVE10)" style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:#0f1422; color:var(--text)" />
+        <button class="btn" id="applyCoupon">Apply</button>
+      </div>
+      <button id="checkoutBtn" class="btn primary" style="width:100%; margin-top:12px">Checkout</button>
+    </div>
+  </aside>
+
+  <dialog id="checkoutModal">
+    <form method="dialog" class="form" id="checkoutForm">
+      <h3>Checkout</h3>
+      <p class="muted">Demo checkout — no payments. Your order will be stored in LocalStorage.</p>
+      <div class="row" style="gap:10px">
+        <div style="flex:1">
+          <label>Full Name</label>
+          <input required id="name" />
+        </div>
+        <div style="flex:1">
+          <label>Phone</label>
+          <input required id="phone" pattern="[0-9]{10}" placeholder="10-digit" />
+        </div>
+      </div>
+      <label>Address</label>
+      <textarea required id="address" rows="3"></textarea>
+      <div class="row" style="gap:10px">
+        <div style="flex:1">
+          <label>City</label>
+          <input required id="city" />
+        </div>
+        <div style="flex:1">
+          <label>Pincode</label>
+          <input required id="pincode" pattern="[0-9]{6}" />
+        </div>
+      </div>
+      <div class="row-between">
+        <strong>Payable: <span id="payableModal">₹0</span></strong>
+        <menu style="display:flex; gap:8px; margin:0">
+          <button class="btn" value="cancel">Cancel</button>
+          <button class="btn primary" value="submit">Place Order</button>
+        </menu>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="itemTemplate">
+    <article class="card">
+      <div class="thumb">
+        <img alt="" />
+        <span class="badge"></span>
+      </div>
+      <div class="content">
+        <div class="title"></div>
+        <div class="muted"></div>
+        <div class="row-between">
+          <div class="price"></div>
+          <div class="chip rating">⭐ 0.0</div>
+        </div>
+        <div class="row-between" style="margin-top:6px">
+          <div class="qty">
+            <button class="dec" title="Decrease">−</button>
+            <span class="count">1</span>
+            <button class="inc" title="Increase">＋</button>
+          </div>
+          <button class="btn icon add">Add to cart</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    // ---- Demo Product Data -------------------------------------------------
+    const PRODUCTS = [
+      {id:1, name:"Wireless Headphones", category:"Audio", price:2499, rating:4.4, tag:"Bestseller", img:svg('🎧')},
+      {id:2, name:"Bluetooth Speaker", category:"Audio", price:1799, rating:4.2, tag:"Popular", img:svg('🔊')},
+      {id:3, name:"Smart Watch", category:"Wearables", price:3299, rating:4.5, tag:"New", img:svg('⌚')},
+      {id:4, name:"Fitness Band", category:"Wearables", price:1499, rating:4.1, tag:"Deal", img:svg('🏃')},
+      {id:5, name:"Gaming Mouse", category:"Accessories", price:1299, rating:4.6, tag:"Pro", img:svg('🖱️')},
+      {id:6, name:"Mechanical Keyboard", category:"Accessories", price:2899, rating:4.7, tag:"Hot", img:svg('⌨️')},
+      {id:7, name:"USB‑C Charger 30W", category:"Accessories", price:999, rating:4.3, tag:"Fast", img:svg('🔌')},
+      {id:8, name:"4K Action Camera", category:"Cameras", price:6999, rating:4.0, tag:"Adventure", img:svg('📷')},
+      {id:9, name:"Tripod Stand", category:"Cameras", price:899, rating:4.1, tag:"Stable", img:svg('🎥')},
+      {id:10, name:"Noise Cancelling Buds", category:"Audio", price:2999, rating:4.4, tag:"ANC", img:svg('🫧')},
+      {id:11, name:"Laptop Sleeve 15\"", category:"Bags", price:749, rating:4.2, tag:"Protect", img:svg('💼')},
+      {id:12, name:"Portable SSD 1TB", category:"Storage", price:6999, rating:4.8, tag:"Fast", img:svg('💽')},
+    ];
+
+    // Create tiny inline SVG placeholders so this works offline.
+    function svg(emoji){
+      const enc = encodeURIComponent(`<?xml version='1.0'?>\n<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>\n<defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0%' stop-color='#1f2937'/><stop offset='100%' stop-color='#0ea5e9'/></linearGradient></defs>\n<rect width='100%' height='100%' rx='22' fill='url(#g)'/>\n<text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-size='120' fill='white'>${emoji}</text>\n</svg>`);
+      return `data:image/svg+xml,${enc}`;
+    }
+
+    // ---- State -------------------------------------------------------------
+    const state = {
+      query: '', category: 'all', sort: 'popularity',
+      cart: load('cart', {}),
+      coupon: load('coupon', null),
+    };
+
+    function load(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback }catch{ return fallback } }
+    function save(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
+
+    const rupee = n => new Intl.NumberFormat('en-IN', {style:'currency', currency:'INR', maximumFractionDigits:0}).format(n);
+
+    // ---- UI Init -----------------------------------------------------------
+    const grid = document.getElementById('grid');
+    const itemTpl = document.getElementById('itemTemplate');
+    const search = document.getElementById('search');
+    const filterCategory = document.getElementById('filterCategory');
+    const sortBy = document.getElementById('sortBy');
+    const activeFilters = document.getElementById('activeFilters');
+
+    const drawer = document.getElementById('drawer');
+    const openCartBtn = document.getElementById('openCart');
+    const closeCartBtn = document.getElementById('closeCart');
+    const cartList = document.getElementById('cartList');
+    const cartCount = document.getElementById('cartCount');
+
+    const subtotalEl = document.getElementById('subtotal');
+    const taxEl = document.getElementById('tax');
+    const shippingEl = document.getElementById('shipping');
+    const grandEl = document.getElementById('grand');
+    const couponInput = document.getElementById('coupon');
+
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const modal = document.getElementById('checkoutModal');
+    const form = document.getElementById('checkoutForm');
+    const payableModal = document.getElementById('payableModal');
+
+    // Populate category filter
+    [...new Set(PRODUCTS.map(p=>p.category))].sort().forEach(c=>{
+      const opt = document.createElement('option'); opt.value=c; opt.textContent=c; filterCategory.appendChild(opt);
+    });
+
+    // Search & Filters
+    search.addEventListener('input', e=>{ state.query = e.target.value.trim().toLowerCase(); render() });
+    filterCategory.addEventListener('change', e=>{ state.category = e.target.value; render() });
+    sortBy.addEventListener('change', e=>{ state.sort = e.target.value; render() });
+    document.getElementById('clearFilters').addEventListener('click', ()=>{
+      state.query=''; state.category='all'; state.sort='popularity';
+      search.value=''; filterCategory.value='all'; sortBy.value='popularity'; render();
+    });
+
+    // Cart drawer controls
+    openCartBtn.addEventListener('click', ()=> openDrawer(true));
+    closeCartBtn.addEventListener('click', ()=> openDrawer(false));
+    function openDrawer(open){
+      drawer.classList.toggle('open', open); drawer.setAttribute('aria-hidden', String(!open));
+    }
+
+    // Render products
+    function render(){
+      const q = state.query;
+      let items = PRODUCTS.filter(p=> (state.category==='all' || p.category===state.category) && p.name.toLowerCase().includes(q));
+
+      switch(state.sort){
+        case 'priceAsc': items.sort((a,b)=>a.price-b.price); break;
+        case 'priceDesc': items.sort((a,b)=>b.price-a.price); break;
+        case 'rating': items.sort((a,b)=>b.rating-a.rating); break;
+        case 'new': items = items.slice().reverse(); break;
+        default: items.sort((a,b)=>b.rating*10 + (10000-b.price) - (a.rating*10 + (10000-a.price))); // fake popularity
+      }
+
+      activeFilters.textContent = `Showing: ${state.category==='all'?'All items':state.category} • ${items.length} result(s)`;
+
+      grid.innerHTML='';
+      items.forEach(p=> grid.appendChild(renderCard(p)));
+    }
+
+    function renderCard(p){
+      const node = itemTpl.content.cloneNode(true);
+      const img = node.querySelector('img'); img.src=p.img; img.alt=p.name;
+      node.querySelector('.badge').textContent = p.tag || '';
+      node.querySelector('.title').textContent = p.name;
+      node.querySelector('.muted').textContent = p.category;
+      node.querySelector('.price').textContent = rupee(p.price);
+      node.querySelector('.rating').textContent = `⭐ ${p.rating.toFixed(1)}`;
+
+      // Qty controls (per add action)
+      let count = 1;
+      const countEl = node.querySelector('.count');
+      const dec = node.querySelector('.dec');
+      const inc = node.querySelector('.inc');
+      const add = node.querySelector('.add');
+      const sync = ()=> countEl.textContent = count;
+      dec.addEventListener('click', ()=>{ count=Math.max(1, count-1); sync();});
+      inc.addEventListener('click', ()=>{ count+=1; sync();});
+      add.addEventListener('click', ()=>{ addToCart(p.id, count); animateCart(); });
+
+      return node;
+    }
+
+    function animateCart(){
+      cartCount.style.transform='scale(1.1)'; cartCount.style.transition='transform .12s ease';
+      setTimeout(()=> cartCount.style.transform='scale(1)', 120);
+    }
+
+    // ---- Cart --------------------------------------------------------------
+    function addToCart(id, qty=1){
+      state.cart[id] = (state.cart[id]||0) + qty; save('cart', state.cart); updateCartUI();
+    }
+    function setQty(id, qty){ if(qty<=0){ delete state.cart[id] } else { state.cart[id]=qty } save('cart', state.cart); updateCartUI(); }
+    function removeItem(id){ delete state.cart[id]; save('cart', state.cart); updateCartUI(); }
+    function clearCart(){ state.cart={}; save('cart', state.cart); updateCartUI(); }
+
+    function getCartItems(){
+      return Object.entries(state.cart).map(([id,qty])=>{
+        const p = PRODUCTS.find(x=>x.id==id); return { ...p, qty, line: p.price*qty };
+      }).filter(Boolean);
+    }
+
+    function updateCartUI(){
+      const items = getCartItems();
+      const count = items.reduce((n,i)=> n + Number(i.qty), 0);
+      cartCount.textContent = count;
+
+      cartList.innerHTML='';
+      if(items.length===0){ cartList.innerHTML = `<p class='muted'>Your cart is empty.</p>`; }
+
+      items.forEach(item=>{
+        const row = document.createElement('div'); row.className='cart-item';
+        row.innerHTML = `
+          <img src="${item.img}" alt="${item.name}">
+          <div>
+            <div style="font-weight:700">${item.name}</div>
+            <div class="muted" style="font-size:12px">${item.category}</div>
+            <div class="row" style="margin-top:6px; gap:8px">
+              <div class="qty">
+                <button class="b-dec">−</button>
+                <span class="b-count">${item.qty}</span>
+                <button class="b-inc">＋</button>
+              </div>
+              <button class="btn" style="background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.3)" title="Remove">Remove</button>
+            </div>
+          </div>
+          <strong>${rupee(item.line)}</strong>
+        `;
+        row.querySelector('.b-dec').addEventListener('click', ()=> setQty(item.id, Number(item.qty)-1));
+        row.querySelector('.b-inc').addEventListener('click', ()=> setQty(item.id, Number(item.qty)+1));
+        row.querySelector('.btn').addEventListener('click', ()=> removeItem(item.id));
+        cartList.appendChild(row);
+      });
+
+      // Totals
+      const subtotal = items.reduce((s,i)=> s+i.line, 0);
+      const gst = Math.round(subtotal * 0.18);
+      const shipping = subtotal>2999 ? 0 : (items.length>0 ? 79 : 0);
+      let total = subtotal + gst + shipping;
+
+      // Coupon (SAVE10: 10% off up to ₹500)
+      let coupon = state.coupon;
+      if(coupon === 'SAVE10'){
+        const disc = Math.min(500, Math.round(total*0.10));
+        total -= disc;
+      }
+
+      subtotalEl.textContent = rupee(subtotal);
+      taxEl.textContent = rupee(gst);
+      shippingEl.textContent = shipping===0? 'FREE' : rupee(shipping);
+      grandEl.textContent = rupee(total);
+      payableModal.textContent = rupee(total);
+    }
+
+    // Coupon handling
+    document.getElementById('applyCoupon').addEventListener('click', ()=>{
+      const code = couponInput.value.trim().toUpperCase();
+      if(!code){ state.coupon=null; save('coupon', null); updateCartUI(); return }
+      if(code==='SAVE10'){
+        state.coupon='SAVE10'; save('coupon', 'SAVE10'); updateCartUI(); alert('Coupon applied: 10% off (max ₹500)');
+      } else {
+        alert('Invalid coupon for this demo. Try SAVE10.');
+      }
+    });
+
+    // Checkout
+    checkoutBtn.addEventListener('click', ()=>{
+      if(Object.keys(state.cart).length===0){ alert('Your cart is empty.'); return }
+      modal.showModal();
+    });
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const items = getCartItems();
+      if(items.length===0){ alert('Cart empty.'); modal.close(); return }
+      const order = {
+        id: 'ORD' + Math.random().toString(36).slice(2,8).toUpperCase(),
+        when: new Date().toISOString(),
+        items,
+        totals: {
+          subtotal: subtotalEl.textContent,
+          tax: taxEl.textContent,
+          shipping: shippingEl.textContent,
+          total: grandEl.textContent,
+          coupon: state.coupon
+        },
+        customer: {
+          name: document.getElementById('name').value,
+          phone: document.getElementById('phone').value,
+          address: document.getElementById('address').value,
+          city: document.getElementById('city').value,
+          pincode: document.getElementById('pincode').value,
+        }
+      };
+      const orders = load('orders', []); orders.push(order); save('orders', orders);
+      clearCart(); modal.close();
+      alert(`Order placed!\n\nOrder ID: ${order.id}\nItems: ${items.length}\nTotal: ${order.totals.total}`);
+    });
+
+    // Start
+    render(); updateCartUI(); if(state.coupon) couponInput.value = state.coupon;
+
+  </script>
+
+  <footer>
+    <div>⚡ Demo app. Frontend‑only. Data persists via LocalStorage. Customize the PRODUCTS array to add your own items.</div>
+  </footer>
+</body>
+</html>
+
+ 
